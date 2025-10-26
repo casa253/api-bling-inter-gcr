@@ -1,8 +1,6 @@
 import express from 'express';
 import nodeFetch from 'node-fetch'; 
-import { getCertKeyFromP12 } from './p12-processor.js'; // Novo arquivo de processamento P12
 import https from 'https'; // Módulo nativo para mTLS
-import url from 'url'; // Módulo nativo
 import { KEYUTIL, X509 } from 'jsrsasign'; // Bibliotecas para P12 (necessário no package.json)
 
 const app = express();
@@ -23,7 +21,7 @@ const SCOPE = process.env.SCOPE;
 const INTER_TOKEN_URL = process.env.INTER_TOKEN_URL; 
 
 // =========================================================
-// FUNÇÃO DE PROCESSAMENTO P12 (MOVIDA PARA DENTRO DO ARQUIVO POR SIMPLICIDADE)
+// FUNÇÃO DE PROCESSAMENTO P12
 // =========================================================
 
 /**
@@ -32,23 +30,34 @@ const INTER_TOKEN_URL = process.env.INTER_TOKEN_URL;
  * @param {string} p12Password - Senha do certificado.
  * @returns {{privateKey: string, certificate: string}} PEM key and certificate.
  */
-function getCertKeyFromP12(p12Base64, p12Password) {
+const getCertKeyFromP12 = (p12Base64, p12Password) => {
+    // Log para confirmar que a função P12 foi iniciada
+    console.log("LOG P12: Iniciando processamento interno do certificado...");
+    
     if (!p12Base64 || !p12Password) {
+        // Se as credenciais estiverem faltando, lança um erro, mas não trava.
         throw new Error("Credenciais P12 (Base64/Senha) não configuradas no ambiente.");
     }
+    
+    // Log para verificar o tamanho da string Base64 (deve ser grande)
+    console.log(`LOG P12: P12_BASE64 Length: ${p12Base64.length}`);
 
+    // Conversão de Base64 para binário (DER)
     const p12Der = Buffer.from(p12Base64, 'base64').toString('binary');
     const p12Hex = Buffer.from(p12Der, 'binary').toString('hex');
 
-    // Analisa o P12 com a biblioteca jsrsasign
+    // Analisa o P12 com a biblioteca jsrsasign (Esta é a operação mais pesada e síncrona)
     const p12Data = KEYUTIL.parsePKCS12(p12Hex, p12Password);
     
     const p12Key = p12Data.key;
     const p12Cert = p12Data.certs[0];
 
-    // Converte para o formato PEM, necessário para o mTLS
+    // Converte para o formato PEM
     const privateKey = KEYUTIL.getPEM(p12Key, "PKCS8PRV");
     const certificate = X509.pem(p12Cert);
+    
+    // Log para confirmar que a função P12 foi concluída
+    console.log("LOG P12: Processamento interno do certificado concluído com sucesso.");
     
     return { privateKey, certificate };
 }
@@ -58,33 +67,37 @@ function getCertKeyFromP12(p12Base64, p12Password) {
 // ---------------------------------------------------------
 app.post('/', async (req, res) => {
     
+    // Log CRÍTICO para confirmar que o servidor recebeu a requisição
+    console.log('LOG POST: Servidor recebeu a requisição POST com sucesso.');
+    
     // Variáveis que armazenarão a chave e o certificado PEM
     let mTLSCredentials;
     
     try {
-        console.log('Requisição POST recebida.');
-
         const payload = req.body;
-        console.log('Payload recebido:', JSON.stringify(payload, null, 2));
+        console.log('LOG POST: Payload recebido:', JSON.stringify(payload, null, 2));
         
         // 2. Lógica de Validação
         if (!payload || Object.keys(payload).length === 0) {
+            // Se o payload for inválido, responde com 400.
             return res.status(400).json({ 
                 status: 'Erro de Requisição', 
                 message: 'Corpo da requisição vazio. Esperando o payload do Bling.' 
             });
         }
         
+        // Log CRÍTICO antes da função síncrona P12
+        console.log("LOG POST: Iniciando bloco try/catch para processamento P12...");
+        
         // ------------------------------------------------------------------
-        // NOVO PASSO: Extrair Chave/Certificado P12.
-        // Se a requisição travar, o erro deve estar aqui.
+        // PASSO CRÍTICO: Extrair Chave/Certificado P12.
         // ------------------------------------------------------------------
         try {
             mTLSCredentials = getCertKeyFromP12(P12_BASE64, P12_PASSWORD);
-            console.log("Sucesso ao processar P12. Iniciando requisição mTLS.");
+            console.log("LOG POST: Sucesso ao processar P12. Iniciando requisição mTLS.");
         } catch (p12Error) {
-             console.error("ERRO P12/mTLS:", p12Error.message);
-             // Retorna um 403 se falhar, indicando que não podemos autenticar no Inter
+             console.error("LOG POST: ERRO P12/mTLS (Catch Block):", p12Error.message);
+             // Se o erro for capturado, responde imediatamente (sem travar)
              return res.status(403).json({
                  status: 'Falha de Autenticação mTLS',
                  message: 'Falha ao processar o certificado P12 (Base64 ou Senha incorretos).',
@@ -93,13 +106,10 @@ app.post('/', async (req, res) => {
         }
         
         // 3. LÓGICA DE REQUISIÇÃO PARA O INTER (TOKEN)
-        // Isso deve ser feito em seguida, usando mTLSCredentials.privateKey e mTLSCredentials.certificate.
-        
-        // --- COLOCAR AQUI A LÓGICA DE GERAÇÃO DO TOKEN E ENVIO PARA O INTER ---
-        // Exemplo:
-        // const token = await solicitarTokenInter(mTLSCredentials);
+        // O código de solicitação do token M-TLS será colocado aqui.
         
         // 4. Resposta de Sucesso
+        console.log("LOG POST: Respondendo com 200 (Sucesso provisório).");
         res.status(200).json({ 
             status: 'Sucesso', 
             message: 'Requisição processada com sucesso. Certificado P12 OK.',
@@ -107,7 +117,7 @@ app.post('/', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Erro durante o processamento da requisição:', error.message);
+        console.error('LOG POST: Erro fatal durante o processamento da requisição:', error.message);
         res.status(500).json({ 
             status: 'Erro Interno do Servidor', 
             error: error.message 
