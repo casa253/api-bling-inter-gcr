@@ -1,0 +1,61 @@
+<<<<<<< HEAD
+----------------------------------------------
+
+Arquivo de Segurança: Arquivos a serem ignorados
+
+----------------------------------------------
+
+Variáveis de Ambiente e Segredos
+
+Mantenha o .env local, mas NUNCA envie para o GitHub.
+
+.env
+.env.*
+!.env.example
+
+Pasta de Dependências (Node.js) - Essencial ser ignorado!
+
+/node_modules
+jspm_packages/
+web_modules/
+
+Logs e Dados de Depuração
+
+logs
+.log
+npm-debug.log
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+Cobertura e Cache
+
+.nyc_output
+coverage
+*.lcov
+.cache
+.npm
+.eslintcache
+.stylelintcache
+
+Arquivos Gerados de Build e Otimização
+
+O Cloud Run gera isso, não precisamos enviar.
+
+*.tsbuildinfo
+build/Release
+.next
+out
+.nuxt
+dist
+.serverless/
+.firebase/
+.dynamodb/
+
+Arquivos do OS
+
+.DS_Store
+Thumbs.db
+=======
+.vercel
+>>>>>>> 5936c223e9b679cefa109f9a4bff8c2fee822e86
