@@ -21,7 +21,7 @@ const SCOPE = process.env.SCOPE;
 const INTER_TOKEN_URL = process.env.INTER_TOKEN_URL; 
 
 // =========================================================
-// FUNÇÃO DE PROCESSAMENTO P12
+// FUNÇÃO DE PROCESSAMENTO P12 (MANTIDA, MAS NÃO SERÁ CHAMADA POR ENQUANTO)
 // =========================================================
 
 /**
@@ -86,33 +86,34 @@ app.post('/', async (req, res) => {
             });
         }
         
-        // Log CRÍTICO antes da função síncrona P12
+        // ==================================================================
+        // ⚠️ ATENÇÃO: BLOCO P12 DESATIVADO PARA TESTE DE LIVENESS ⚠️
+        // Se o Postman responder AGORA, o problema é 100% o processamento P12.
+        // ==================================================================
+        /*
         console.log("LOG POST: Iniciando bloco try/catch para processamento P12...");
-        
-        // ------------------------------------------------------------------
-        // PASSO CRÍTICO: Extrair Chave/Certificado P12.
-        // ------------------------------------------------------------------
         try {
             mTLSCredentials = getCertKeyFromP12(P12_BASE64, P12_PASSWORD);
             console.log("LOG POST: Sucesso ao processar P12. Iniciando requisição mTLS.");
         } catch (p12Error) {
              console.error("LOG POST: ERRO P12/mTLS (Catch Block):", p12Error.message);
-             // Se o erro for capturado, responde imediatamente (sem travar)
              return res.status(403).json({
                  status: 'Falha de Autenticação mTLS',
                  message: 'Falha ao processar o certificado P12 (Base64 ou Senha incorretos).',
                  detail: p12Error.message
              });
         }
+        */
+        // ==================================================================
         
         // 3. LÓGICA DE REQUISIÇÃO PARA O INTER (TOKEN)
         // O código de solicitação do token M-TLS será colocado aqui.
         
         // 4. Resposta de Sucesso
-        console.log("LOG POST: Respondendo com 200 (Sucesso provisório).");
+        console.log("LOG POST: Respondendo com 200 (Sucesso provisório - Lógica P12 desativada).");
         res.status(200).json({ 
             status: 'Sucesso', 
-            message: 'Requisição processada com sucesso. Certificado P12 OK.',
+            message: 'Requisição processada com sucesso. Servidor OK.',
             payloadEcho: payload 
         });
 
