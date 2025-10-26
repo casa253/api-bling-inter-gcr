@@ -1,33 +1,15 @@
-<<<<<<< HEAD
-{
-  "name": "bling-inter-webhook",
-  "version": "1.0.0",
-  "description": "Webhook para integração Bling com Boleto Inter via mTLS.",
-  "main": "index.js",
-  "type": "module",
-  "scripts": {
-    "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "express": "^4.19.2",
-    "node-fetch": "^3.3.2"
-  },
-  "devDependencies": {
-    "crypto": "^1.0.1",
-    "https": "^1.0.0"
-  }
-=======
 {
   "name": "api-bling-inter",
   "version": "1.0.0",
-  "description": "API Gateway para Bling e Banco Inter",
-  "main": "api/obter-token.js",
-  "dependencies": {
-    "jsrsasign": "^11.0.0" 
-  },
+  "description": "Webhook do Bling para API M-TLS do Inter.",
+  "main": "index.js",
+  "type": "module", 
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  }
->>>>>>> 5936c223e9b679cefa109f9a4bff8c2fee822e86
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "node-fetch": "^3.3.2",
+    "jsrsasign": "^10.8.6"
+    }
 }
